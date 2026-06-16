@@ -60,6 +60,7 @@ class LoadUnit(implicit p: SVMParams) extends LSU with HasMemReadPort with HasMe
   val read = mem_r.head
   read.valid := lsu_valid(io.in) && in.pipe.lsu.bits.opcode(4)
   read.address := in.pipe.lsu.bits.phy_addr
+  io.out.bits.uop.bits.flags.is_load_store := pipe.bits.uop.bits.flags.is_load_store || read.valid
 
   val load_enable_reg = RegNext(read.valid, false.B)
   val load_addr = out.pipe.lsu.bits.phy_addr
@@ -123,6 +124,8 @@ class StoreUnit(implicit p: SVMParams) extends LSU with HasMemWritePort {
         p"data: 0x${Hexadecimal(store.bits.wdata.asUInt)}, len: ${Hexadecimal(store.bits.wmask.asUInt)}"
     )
   }
+
+  io.out.bits.uop.bits.flags.is_load_store := io.in.bits.uop.bits.flags.is_load_store || store.valid
 }
 
 class AGU(implicit p: SVMParams) extends LSU {

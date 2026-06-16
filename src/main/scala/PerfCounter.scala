@@ -17,6 +17,14 @@ object PerfCounter {
   }
 
   def apply(inc: UInt, name: String): UInt = {
+    val cycleCnt = RegInit(0.U(64.W))
+    cycleCnt := cycleCnt + 1.U
+    val counter = RegInit(0.U(64.W))
+    counter := counter + inc
+    // 1024 cycles
+    when ((cycleCnt & 0x3ff.U) === 0x3ff.U) {
+      printf(p"[$cycleCnt] $name: $counter\n")
+    }
     val inc_reg = RegNext(inc, 0.U(64.W))
     sources.append((inc_reg, name))
     if (sources.length <= sinks.length) {

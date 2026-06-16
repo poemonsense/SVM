@@ -18,6 +18,7 @@ abstract class MMU(implicit p: SVMParams) extends PipelineStage with HasMemReadP
   val ins = io.in +: stages.map(_.io.out)
   val outs = stages.map(_.io.in) :+ io.out
   Seq(ins.zip(outs).head, ins.zip(outs).last).foreach { case (i, o) => o := i }
+  outs.head.bits.uop.bits.flags.is_mmu := ins.head.bits.uop.bits.flags.is_mmu || enable_translation
   // for timing considerations, we add one more pipeline for each intermediate translation stage
   ins.zip(outs).tail.dropRight(1).foreach { case (i, o) => o := PipelineConnect.next(i) }
 

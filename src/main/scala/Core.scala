@@ -121,10 +121,11 @@ class Core(implicit p: SVMParams) extends Module {
   }
   PerfCounter(true.B, "cycles")
   CommitPerfCounter(c => c.valid && c.bits.uop.valid, "core_out")
+  CommitPerfCounter(c => c.valid && c.bits.uop.valid && c.bits.uop.bits.flags.is_mmu , "core_out_mmu")
+  CommitPerfCounter(c => c.valid && c.bits.uop.valid && c.bits.uop.bits.flags.is_load_store, "core_out_load_store")
   CommitPerfCounter(c => c.valid && c.bits.uop.valid && c.bits.uop.bits.flags.is_miss, "core_out_miss")
   CommitPerfCounter(c => c.valid && c.bits.uop.valid && c.bits.uop.bits.flags.miss_immu, "core_out_miss_immu")
   CommitPerfCounter(c => c.valid && c.bits.uop.valid && c.bits.uop.bits.flags.miss_fetch, "core_out_miss_fetch")
   CommitPerfCounter(c => c.valid && c.bits.uop.valid && c.bits.uop.bits.flags.miss_dmmu, "core_out_miss_dmmu")
   CommitPerfCounter(c => c.valid && c.bits.uop.valid && c.bits.uop.bits.flags.miss_load, "core_out_miss_load")
-  printf("Assertion failed:")
 }

@@ -124,6 +124,8 @@ class SingleStepTracker(implicit p: SVMParams) extends Module {
   io.execute.valid := state === s_issue
   io.execute.bits.id := 0.U
   io.execute.bits.uop.valid := state === s_issue
+  io.execute.bits.uop.bits.flags.is_mmu := false.B
+  io.execute.bits.uop.bits.flags.is_load_store := false.B
   io.execute.bits.uop.bits.flags.miss_immu := false.B
   io.execute.bits.uop.bits.flags.miss_fetch := false.B
   io.execute.bits.uop.bits.flags.miss_load := false.B
@@ -180,6 +182,8 @@ class RefStateTracker(stepT: GoldenStep)(implicit p: SVMParams) extends Module {
   io.execute.valid := io.step.valid
   io.execute.bits.id := allocate_id
   io.execute.bits.uop.valid := DontCare
+  io.execute.bits.uop.bits.flags.is_mmu := false.B
+  io.execute.bits.uop.bits.flags.is_load_store := false.B
   io.execute.bits.uop.bits.flags.miss_immu := false.B
   io.execute.bits.uop.bits.flags.miss_fetch := false.B
   io.execute.bits.uop.bits.flags.miss_load := false.B

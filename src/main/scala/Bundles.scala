@@ -72,6 +72,8 @@ class ReferenceFlags extends Bundle {
   val miss_load = Bool()
   val miss_dmmu = Bool()
   val exit = Bool()
+  val is_mmu = Bool()
+  val is_load_store = Bool()
 
   def is_miss: Bool = miss_immu || miss_fetch || miss_load || miss_dmmu
 }
