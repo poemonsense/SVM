@@ -19,6 +19,7 @@ class Generator(object):
 
     self.release = args.release
     self.debug = args.debug
+    self.disable_perf_counter = args.disable_perf_counter
 
     self.commands = []
     self.scripts = dict()
@@ -83,6 +84,8 @@ class Generator(object):
       filename += f"_{self.cache_size}{self.cache_ways}way"
     else:
       filename += "_no_cache"
+    if self.disable_perf_counter:
+      filename += "_no_perf_counter"
     return filename
 
   def generate_script(self, output_dir=None):
@@ -134,13 +137,15 @@ class Simulator(Generator):
       command.append(f"CONFIG_ARGS=\"{config_str}\"")
     if self.release:
       command.append("RELEASE=1")
+    if self.disable_perf_counter:
+      command.append("DISABLE_PERF_COUNTER=1")
     self.cmd(" ".join(command))
     self.cmd("make -C bootrom")
     self.cmd("")
 
   def build_emu(self):
     self.cmd(f"cd {self.dut_path}")
-    self.cmd("rm -rf build/emu-compile")
+    self.cmd("rm -rf build/emu-compile build/verilator-compile")
     command = []
     command.append(f"NOOP_HOME={self.dut_path} make emu -j16 NO_DIFF=1 RTL_INCLUDE={self.ref_path}/build/rtl/filelist.f")
     command.append(f"WITH_CHISELDB=0 WITH_CONSTANTIN=0 ASSERT_VERBOSE_COND=1 STOP_COND=0")
@@ -318,6 +323,7 @@ if __name__ == "__main__":
   parser.add_argument('--image', '-i', default="./ready-to-run/linux.bin", help="image (dut-relative)")
   parser.add_argument('--release', action="store_true", help="enable RELEASE=1")
   parser.add_argument('--debug', action="store_true", help="enable EMU_TRACE")
+  parser.add_argument('--disable-perf-counter', action="store_true", help="disable SVM performance counters")
   parser.add_argument('--output', help="output directory name")
   parser.add_argument('--generator', default="Simulator", help="generator class")
 

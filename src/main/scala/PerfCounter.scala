@@ -8,6 +8,13 @@ import java.nio.charset.StandardCharsets
 object PerfCounter {
   private val sources = scala.collection.mutable.ListBuffer.empty[(UInt, String)]
   private val sinks = scala.collection.mutable.ListBuffer.empty[UInt]
+  private var enabled = true
+
+  def configure(enable: Boolean): Unit = {
+    enabled = enable
+    sources.clear()
+    sinks.clear()
+  }
 
   private def wiring_name(i: Int): String = s"svm_perf_$i"
   private def do_pair(src: UInt, dest: UInt, index: Int) = {
@@ -17,6 +24,9 @@ object PerfCounter {
   }
 
   def apply(inc: UInt, name: String): UInt = {
+    if (!enabled) {
+      return 0.U(64.W)
+    }
     val cycleCnt = RegInit(0.U(64.W))
     cycleCnt := cycleCnt + 1.U
     val counter = RegInit(0.U(64.W))
@@ -41,6 +51,9 @@ object PerfCounter {
   }
 
   def sink(inc: UInt): UInt = {
+    if (!enabled) {
+      return 0.U(64.W)
+    }
     sinks.append(inc)
     if (sinks.length <= sources.length) {
       do_pair(sources(sinks.length - 1)._1, inc, sinks.length - 1)
@@ -49,12 +62,14 @@ object PerfCounter {
   }
 
   def collect(filename: String, n: Int): Unit = {
-    val numCounters = Seq(sources.length, sinks.length, n).min
-    val names = sources.take(numCounters).map(_._2)
-    val c_array = names.map(n => s"\"$n\"") ++ Seq.fill(n - numCounters)("NULL")
+    val headerCounters = if (enabled) n else 0
+    val numCounters = if (enabled) Seq(sources.length, sinks.length, n).min else 0
+    val names = if (enabled) sources.take(numCounters).map(_._2) else Seq.empty
+    val c_array = names.map(n => s"\"$n\"") ++ Seq.fill((headerCounters - numCounters).max(1))("NULL")
     val c_str = Seq(
       "#ifndef SVM_PERF_COUNTERS",
-      s"#define SVM_PERF_COUNTERS $n",
+      s"#define SVM_PERF_COUNTERS $headerCounters",
+      s"#define SVM_ENABLE_PERF_COUNTERS ${if (enabled) 1 else 0}",
       "#include <stddef.h>",
       "static const char *perf_names[] = {",
       c_array.mkString(",\n"),

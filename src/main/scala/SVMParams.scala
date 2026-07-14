@@ -37,6 +37,7 @@ case class SVMParams(
   archid: Int = 0,
   impid: Int = 0,
   enableDebug: Boolean = true,
+  enablePerfCounter: Boolean = true,
   platform: String = "sim",
 ) {
   def isSim: Boolean = platform == "sim"
@@ -135,7 +136,7 @@ object SVMParams {
     methodMirror(bundleTypes).asInstanceOf[SVMParams]
   }
 
-  private val arg0 = Seq("--disable-debug")
+  private val arg0 = Seq("--disable-debug", "--disable-perf-counter")
   private val arg1 = Seq("--dut-profile", "--golden-config", "--platform", "--cache-size", "--cache-ways",
     "--cache-banks", "--cache-repl", "--cache-sram-ports", "--cache-refill-on-miss")
   private def readArgs(args: List[String]): (Map[String, String], List[String]) = {
@@ -172,6 +173,8 @@ object SVMParams {
     val params = options.foldRight(fromString(config, bundleTypes)) { case ((key, value), p) =>
       key match {
         case "--disable-debug"    => p.copy(enableDebug = false)
+        case "--disable-perf-counter" =>
+          p.copy(enablePerfCounter = false)
         case "--platform"         => p.copy(platform = value)
         case "--cache-size"       => p.copy(withCache = Some(parseCacheSize(value)))
         case "--cache-ways"       => p.copy(cacheWays = value.toInt)

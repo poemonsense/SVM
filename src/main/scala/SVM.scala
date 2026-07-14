@@ -18,6 +18,8 @@ class GoldenStep(nCommits: Int) extends GoldenState {
 }
 
 class SVM(implicit p: SVMParams) extends Module {
+  PerfCounter.configure(p.enablePerfCounter)
+
   val dut = IO(new Bundle {
     val reset = Output(Bool())
     val step = Input(Valid(new GoldenStep(p.nCommits)))

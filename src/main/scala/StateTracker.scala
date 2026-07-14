@@ -280,7 +280,7 @@ class RefBusIO extends Bundle {
   val wdata = Input(UInt(64.W))
 }
 
-class StateRecorder extends Module {
+class StateRecorder(implicit p: SVMParams) extends Module {
   val io = IO(new Bundle {
     val rw = new RefBusIO
     val assertion_triggered = Output(Bool())
@@ -351,12 +351,14 @@ class StateRecorder extends Module {
   }
 
   // Performance counters
-  val n_perf_counter = 96
+  val n_perf_counter = if (p.enablePerfCounter) 96 else 0
   val perf_counter_reg = Seq.fill(n_perf_counter)(RegInit(0.U(64.W)))
-  val inc = Seq.fill(n_perf_counter)(WireInit(0.U(64.W)))
-  inc.foreach(PerfCounter.sink)
-  for ((i, p) <- inc.zip(perf_counter_reg)) {
-    p := p + i
+  if (p.enablePerfCounter) {
+    val inc = Seq.fill(n_perf_counter)(WireInit(0.U(64.W)))
+    inc.foreach(PerfCounter.sink)
+    for ((increment, counter) <- inc.zip(perf_counter_reg)) {
+      counter := counter + increment
+    }
   }
 
   // MMIO read/write
