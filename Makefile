@@ -31,9 +31,8 @@ ifneq ($(RELEASE),)
 MILL_ARGS += --disable-debug
 endif
 
-ifneq ($(DISABLE_PERF_COUNTER),)
-MILL_ARGS += --disable-perf-counter
-endif
+PERF_COUNTER ?= no
+MILL_ARGS += --perf-counter $(PERF_COUNTER)
 
 ifneq ($(CONFIG_ARGS),)
 MILL_ARGS += $(CONFIG_ARGS)

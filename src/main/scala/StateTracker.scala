@@ -351,9 +351,9 @@ class StateRecorder(implicit p: SVMParams) extends Module {
   }
 
   // Performance counters
-  val n_perf_counter = if (p.enablePerfCounter) 96 else 0
+  val n_perf_counter = if (p.enableHwPerfCounter) 96 else 0
   val perf_counter_reg = Seq.fill(n_perf_counter)(RegInit(0.U(64.W)))
-  if (p.enablePerfCounter) {
+  if (p.enableHwPerfCounter) {
     val inc = Seq.fill(n_perf_counter)(WireInit(0.U(64.W)))
     inc.foreach(PerfCounter.sink)
     for ((increment, counter) <- inc.zip(perf_counter_reg)) {

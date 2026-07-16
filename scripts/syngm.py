@@ -19,7 +19,7 @@ class Generator(object):
 
     self.release = args.release
     self.debug = args.debug
-    self.disable_perf_counter = args.disable_perf_counter
+    self.perf_counter = args.perf_counter
 
     self.commands = []
     self.scripts = dict()
@@ -84,8 +84,8 @@ class Generator(object):
       filename += f"_{self.cache_size}{self.cache_ways}way"
     else:
       filename += "_no_cache"
-    if self.disable_perf_counter:
-      filename += "_no_perf_counter"
+    if self.perf_counter != "no":
+      filename += f"_{self.perf_counter}_perf_counter"
     return filename
 
   def generate_script(self, output_dir=None):
@@ -137,8 +137,7 @@ class Simulator(Generator):
       command.append(f"CONFIG_ARGS=\"{config_str}\"")
     if self.release:
       command.append("RELEASE=1")
-    if self.disable_perf_counter:
-      command.append("DISABLE_PERF_COUNTER=1")
+    command.append(f"PERF_COUNTER={self.perf_counter}")
     self.cmd(" ".join(command))
     self.cmd("make -C bootrom")
     self.cmd("")
@@ -323,7 +322,8 @@ if __name__ == "__main__":
   parser.add_argument('--image', '-i', default="./ready-to-run/linux.bin", help="image (dut-relative)")
   parser.add_argument('--release', action="store_true", help="enable RELEASE=1")
   parser.add_argument('--debug', action="store_true", help="enable EMU_TRACE")
-  parser.add_argument('--disable-perf-counter', action="store_true", help="disable SVM performance counters")
+  parser.add_argument('--perf-counter', choices=('no', 'hw', 'sim'), default='no',
+                      help="SVM performance counter output mode (default: no)")
   parser.add_argument('--output', help="output directory name")
   parser.add_argument('--generator', default="Simulator", help="generator class")
 

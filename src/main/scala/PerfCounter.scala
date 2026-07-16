@@ -8,13 +8,18 @@ import java.nio.charset.StandardCharsets
 object PerfCounter {
   private val sources = scala.collection.mutable.ListBuffer.empty[(UInt, String)]
   private val sinks = scala.collection.mutable.ListBuffer.empty[UInt]
-  private var enabled = true
+  private var mode = "no"
 
-  def configure(enable: Boolean): Unit = {
-    enabled = enable
+  def configure(perfCounterMode: String): Unit = {
+    require(Seq("no", "hw", "sim").contains(perfCounterMode),
+      s"perf counter mode must be one of no, hw, or sim: $perfCounterMode")
+    mode = perfCounterMode
     sources.clear()
     sinks.clear()
   }
+
+  private def hardwareEnabled: Boolean = mode == "hw"
+  private def simulationEnabled: Boolean = mode == "sim"
 
   private def wiring_name(i: Int): String = s"svm_perf_$i"
   private def do_pair(src: UInt, dest: UInt, index: Int) = {
@@ -24,17 +29,22 @@ object PerfCounter {
   }
 
   def apply(inc: UInt, name: String): UInt = {
-    if (!enabled) {
+    if (!hardwareEnabled && !simulationEnabled) {
       return 0.U(64.W)
     }
-    val cycleCnt = RegInit(0.U(64.W))
-    cycleCnt := cycleCnt + 1.U
-    val counter = RegInit(0.U(64.W))
-    counter := counter + inc
-    // 1024 cycles
-    when ((cycleCnt & 0x3ff.U) === 0x3ff.U) {
-      printf(p"[$cycleCnt] $name: $counter\n")
+
+    if (simulationEnabled) {
+      val cycleCnt = RegInit(0.U(64.W))
+      cycleCnt := cycleCnt + 1.U
+      val counter = RegInit(0.U(64.W))
+      counter := counter + inc
+      // 1024 cycles
+      when ((cycleCnt & 0x3ff.U) === 0x3ff.U) {
+        printf(p"[$cycleCnt] $name: $counter\n")
+      }
+      return inc
     }
+
     val inc_reg = RegNext(inc, 0.U(64.W))
     sources.append((inc_reg, name))
     if (sources.length <= sinks.length) {
@@ -51,7 +61,7 @@ object PerfCounter {
   }
 
   def sink(inc: UInt): UInt = {
-    if (!enabled) {
+    if (!hardwareEnabled) {
       return 0.U(64.W)
     }
     sinks.append(inc)
@@ -62,14 +72,14 @@ object PerfCounter {
   }
 
   def collect(filename: String, n: Int): Unit = {
-    val headerCounters = if (enabled) n else 0
-    val numCounters = if (enabled) Seq(sources.length, sinks.length, n).min else 0
-    val names = if (enabled) sources.take(numCounters).map(_._2) else Seq.empty
+    val headerCounters = if (hardwareEnabled) n else 0
+    val numCounters = if (hardwareEnabled) Seq(sources.length, sinks.length, n).min else 0
+    val names = if (hardwareEnabled) sources.take(numCounters).map(_._2) else Seq.empty
     val c_array = names.map(n => s"\"$n\"") ++ Seq.fill((headerCounters - numCounters).max(1))("NULL")
     val c_str = Seq(
       "#ifndef SVM_PERF_COUNTERS",
       s"#define SVM_PERF_COUNTERS $headerCounters",
-      s"#define SVM_ENABLE_PERF_COUNTERS ${if (enabled) 1 else 0}",
+      s"#define SVM_ENABLE_PERF_COUNTERS ${if (hardwareEnabled) 1 else 0}",
       "#include <stddef.h>",
       "static const char *perf_names[] = {",
       c_array.mkString(",\n"),
