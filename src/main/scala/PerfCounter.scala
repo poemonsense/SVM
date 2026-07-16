@@ -11,8 +11,10 @@ object PerfCounter {
   private var mode = "no"
 
   def configure(perfCounterMode: String): Unit = {
-    require(Seq("no", "hw", "sim").contains(perfCounterMode),
-      s"perf counter mode must be one of no, hw, or sim: $perfCounterMode")
+    require(
+      Seq("no", "hw", "sim").contains(perfCounterMode),
+      s"perf counter mode must be one of no, hw, or sim: $perfCounterMode",
+    )
     mode = perfCounterMode
     sources.clear()
     sinks.clear()
@@ -39,7 +41,7 @@ object PerfCounter {
       val counter = RegInit(0.U(64.W))
       counter := counter + inc
       // 1024 cycles
-      when ((cycleCnt & 0x3ff.U) === 0x3ff.U) {
+      when((cycleCnt & 0x3ff.U) === 0x3ff.U) {
         printf(p"[$cycleCnt] $name: $counter\n")
       }
       return inc

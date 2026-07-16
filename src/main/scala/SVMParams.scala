@@ -47,8 +47,7 @@ case class SVMParams(
   def enableSimPerfCounter: Boolean = perfCounter == "sim"
 
   require(isa.toUpperCase.startsWith("RV64"), s"ISA string is expected to start with RV64: $isa")
-  require(Seq("no", "hw", "sim").contains(perfCounter),
-    s"--perf-counter must be one of no, hw, or sim: $perfCounter")
+  require(Seq("no", "hw", "sim").contains(perfCounter), s"--perf-counter must be one of no, hw, or sim: $perfCounter")
   private val extensions = isa.substring(4).toUpperCase.split('_')
 
   def all_insn: Seq[String] = parseIsaString.flatMap(RVInstructions.apply) ++ RVInstructions.baseISA
